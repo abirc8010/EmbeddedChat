@@ -15,18 +15,18 @@ export const getMessageStyles = ({ theme, mode }) => {
 
       &:hover {
         background-color: ${mode === 'light'
-        ? darken(theme.colors.background, 0.03)
-        : lighten(theme.colors.background, 1)};
+          ? darken(theme.colors.background, 0.03)
+          : lighten(theme.colors.background, 1)};
       }
-     @media (max-width: 900px) {
-       font-size: 0.8rem;
-     }
-     @media (max-width: 600px) {
+      @media (max-width: 900px) {
+        font-size: 0.8rem;
+      }
+      @media (max-width: 600px) {
         font-size: 0.7rem;
-     }
-     @media (max-width: 400px) {
-       font-size: 0.4rem;
-     }      
+      }
+      @media (max-width: 400px) {
+        font-size: 0.4rem;
+      }
     `,
     messageEditing: css`
       background-color: ${theme.colors.secondary};
@@ -91,14 +91,14 @@ export const getMessageDividerStyles = (theme) => {
       padding-left: 1.25rem;
       padding-right: 1.25rem;
       @media (max-width: 900px) {
-      font-size: 0.8rem;
-    }
-     @media (max-width: 600px) {
+        font-size: 0.8rem;
+      }
+      @media (max-width: 600px) {
         font-size: 0.7rem;
-     }
-     @media (max-width: 400px) {
+      }
+      @media (max-width: 400px) {
         font-size: 0.6rem;
-     }
+      }
     `,
 
     dividerContent: css`
