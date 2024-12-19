@@ -10,9 +10,10 @@ import {
 
 const useFetchChatData = (showRoles) => {
   const { RCInstance, ECOptions } = useContext(RCContext);
+
   const setMemberRoles = useMemberStore((state) => state.setMemberRoles);
-  const isChannelPrivate = useChannelStore((state) => state.isChannelPrivate);
   const setMessages = useMessageStore((state) => state.setMessages);
+  const currentMessages = useMessageStore((state) => state.messages);
   const setAdmins = useMemberStore((state) => state.setAdmins);
   const setStarredMessages = useStarredMessageStore(
     (state) => state.setStarredMessages
@@ -20,24 +21,17 @@ const useFetchChatData = (showRoles) => {
   const isUserAuthenticated = useUserStore(
     (state) => state.isUserAuthenticated
   );
+  const isChannelPrivate = useChannelStore((state) => state.isChannelPrivate);
 
   const getMessagesAndRoles = useCallback(
     async (anonymousMode) => {
       try {
-        if (!isUserAuthenticated && !anonymousMode) {
-          return;
-        }
+        if (!isUserAuthenticated && !anonymousMode) return;
 
         const { messages } = await RCInstance.getMessages(
           anonymousMode,
           ECOptions?.enableThreads
-            ? {
-                query: {
-                  tmid: {
-                    $exists: false,
-                  },
-                },
-              }
+            ? { query: { tmid: { $exists: false } } }
             : undefined,
           anonymousMode ? false : isChannelPrivate
         );
@@ -46,9 +40,7 @@ const useFetchChatData = (showRoles) => {
           setMessages(messages.filter((message) => message._hidden !== true));
         }
 
-        if (!isUserAuthenticated) {
-          return;
-        }
+        if (!isUserAuthenticated) return;
 
         if (showRoles) {
           const { roles } = await RCInstance.getChannelRoles(isChannelPrivate);
@@ -61,9 +53,9 @@ const useFetchChatData = (showRoles) => {
           const rolesObj =
             roles?.length > 0
               ? roles.reduce(
-                  (obj, item) => ({ ...obj, [item.u.username]: item }),
-                  {}
-                )
+                (obj, item) => ({ ...obj, [item.u.username]: item }),
+                {}
+              )
               : {};
 
           setMemberRoles(rolesObj);
@@ -86,22 +78,54 @@ const useFetchChatData = (showRoles) => {
 
   const getStarredMessages = useCallback(
     async (anonymousMode) => {
-      if (isUserAuthenticated) {
-        try {
-          if (!isUserAuthenticated && !anonymousMode) {
-            return;
-          }
-          const { messages } = await RCInstance.getStarredMessages();
-          setStarredMessages(messages);
-        } catch (e) {
-          console.error(e);
-        }
+      if (!isUserAuthenticated && !anonymousMode) return;
+
+      try {
+        const { messages } = await RCInstance.getStarredMessages();
+        setStarredMessages(messages);
+      } catch (e) {
+        console.error(e);
       }
     },
     [isUserAuthenticated, RCInstance, setStarredMessages]
   );
 
-  return { getMessagesAndRoles, getStarredMessages };
+  const loadMoreMessages = useCallback(
+    async (anonymousMode, offset) => {
+      try {
+        const { messages: newMessages } = await RCInstance.getMessages(
+          anonymousMode,
+          {
+            query: ECOptions?.enableThreads
+              ? { tmid: { $exists: false } }
+              : undefined,
+            offset,
+          },
+          anonymousMode ? false : isChannelPrivate
+        );
+
+        if (newMessages) {
+          const existingMessages = currentMessages; // Retrieve existing messages
+          const mergedMessages = [
+            ...existingMessages,
+            ...newMessages.filter((message) => message._hidden !== true),
+          ];
+          setMessages(mergedMessages); // Update the store with merged messages
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    },
+    [
+      RCInstance,
+      ECOptions?.enableThreads,
+      isChannelPrivate,
+      currentMessages,
+      setMessages,
+    ]
+  );
+
+  return { getMessagesAndRoles, getStarredMessages, loadMoreMessages };
 };
 
 export default useFetchChatData;
