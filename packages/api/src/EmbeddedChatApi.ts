@@ -519,9 +519,11 @@ export default class EmbeddedChatApi {
     options: {
       query?: object | undefined;
       field?: object | undefined;
+      offset?: number | undefined;
     } = {
       query: undefined,
       field: undefined,
+      offset: 0,
     },
     isChannelPrivate = false
   ) {
@@ -533,10 +535,11 @@ export default class EmbeddedChatApi {
     const field = options?.field
       ? `&field=${JSON.stringify(options.field)}`
       : "";
+    const offset = options?.offset ? `&offset=${options.offset}` : "";
     try {
       const { userId, authToken } = (await this.auth.getCurrentUser()) || {};
       const messages = await fetch(
-        `${this.host}/api/v1/${roomType}.${endp}?roomId=${this.rid}${query}${field}`,
+        `${this.host}/api/v1/${roomType}.${endp}?roomId=${this.rid}${query}${field}${offset}`,
         {
           headers: {
             "Content-Type": "application/json",
@@ -551,6 +554,7 @@ export default class EmbeddedChatApi {
       console.log(err);
     }
   }
+  
 
   async getThreadMessages(tmid: string, isChannelPrivate = false) {
     return this.getMessages(
