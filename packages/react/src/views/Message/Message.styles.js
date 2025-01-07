@@ -128,6 +128,7 @@ export const getMessageHeaderStyles = (theme) => {
       text-overflow: ellipsis;
       white-space: nowrap;
       flex-shrink: 1;
+      cursor: pointer;
     `,
 
     userName: css`

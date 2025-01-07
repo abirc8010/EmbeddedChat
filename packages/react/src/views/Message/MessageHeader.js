@@ -12,6 +12,7 @@ import {
 import { useMemberStore, useUserStore } from '../../store';
 import { getMessageHeaderStyles } from './Message.styles';
 import useDisplayNameColor from '../../hooks/useDisplayNameColor';
+import useSetExclusiveState from '../../hooks/useSetExclusiveState';
 import { useRCContext } from '../../context/RCInstance';
 
 const MessageHeader = ({
@@ -22,7 +23,7 @@ const MessageHeader = ({
 }) => {
   const { styleOverrides, classNames, variantOverrides } =
     useComponentOverrides('MessageHeader');
-  const { ECOptions } = useRCContext();
+  const { ECOptions, RCInstance } = useRCContext();
   const displayNameVariant = variantOverrides || 'normal';
   const { theme } = useTheme();
   const styles = getMessageHeaderStyles(theme);
@@ -33,11 +34,26 @@ const MessageHeader = ({
   const showName = ECOptions?.showName;
   const channelLevelRoles = useMemberStore((state) => state.memberRoles);
   const admins = useMemberStore((state) => state.admins);
-
+  const { setShowCurrentUserInfo, setCurrentUser } = useUserStore((state) => ({
+    setShowCurrentUserInfo: state.setShowCurrentUserInfo,
+    setCurrentUser: state.setCurrentUser,
+  }));
+  const setExclusiveState = useSetExclusiveState();
   const isPinned = message.pinned;
   const isStarred =
     message.starred &&
     message.starred.find((u) => u._id === authenticatedUserId);
+
+  const handleUserInfo = async (uname) => {
+    const data = await RCInstance.userData(uname);
+    setCurrentUser({
+      _id: data.user._id,
+      username: data.user.username,
+      name: data.user.name,
+    });
+    setExclusiveState(setShowCurrentUserInfo);
+  };
+
   const userActions = () => {
     switch (message.t) {
       case 'ul':
@@ -101,6 +117,7 @@ const MessageHeader = ({
               ? { color: getDisplayNameColor(message.u.username) }
               : null
           }
+          onClick={() => handleUserInfo(message.u.username)}
         >
           {message.u?.name}
         </Box>
